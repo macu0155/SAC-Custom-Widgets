@@ -62,32 +62,22 @@
     </div>
   `;
 
-  const TAG = "com-custom-liquid-glass-numeric";
+  const TAG = "com-custom-lgn2-numeric";
 
-  class LiquidGlassNumeric extends HTMLElement {
+  class LiquidGlassNumeric2 extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
       this._props = {
-        // text
-        title: "",                // blank by default
-        subtitle: "",
-        unit: "",
-        showTitle: false,         // hidden by default
-        showSubtitle: false,
-        // fonts
+        title: "", subtitle: "", unit: "",
+        showTitle: false, showSubtitle: false,
         titleFontSize: 16, titleColor: "#666",
         subtitleFontSize: 12, subtitleColor: "#777",
         primaryFontSize: 58, primaryColor: "#222",
         secondaryFontSize: 18, secondaryColor: "#333",
-        // number format
-        scale: "none",        // none|k|m|b
-        decimals: 0,
-        signStyle: "default", // default|plusminus|brackets
-        showScaleText: true,
-        showCurrencyUnit: false,
-        // visibility
+        scale: "none", decimals: 0, signStyle: "default",
+        showScaleText: true, showCurrencyUnit: false,
         showSecondary: false
       };
     }
@@ -100,11 +90,9 @@
         const t = this.shadowRoot.getElementById("titleText");
         const s = this.shadowRoot.getElementById("subtitleText");
         const u = this.shadowRoot.getElementById("unitText");
-
         t.innerText = this._props.title || "";
         s.innerText = this._props.subtitle || "";
         u.innerText = this._props.unit || "";
-
         t.style.display = (this._props.showTitle && this._props.title) ? "" : "none";
         s.style.display = (this._props.showSubtitle && this._props.subtitle) ? "" : "none";
         u.style.display = this._props.unit ? "" : "none";
@@ -133,7 +121,6 @@
       const el = this.shadowRoot.getElementById("valuePrimary");
       const badge = this.shadowRoot.getElementById("hoverBadge");
       const binding = this._props.myDataBinding;
-
       const raw = this._firstCell(binding);
       const formatted = this._formatNumber(raw);
       el.innerText = formatted.compact;
@@ -144,7 +131,6 @@
     _updateSecondary() {
       const el = this.shadowRoot.getElementById("valueSecondary");
       if (!this._props.showSecondary) { el.style.display = "none"; return; }
-
       const binding = this._props.secondaryDataBinding;
       const raw = this._firstCell(binding);
       const formatted = this._formatNumber(raw);
@@ -171,7 +157,6 @@
 
     _formatNumber(v) {
       if (v == null || v === "") return { compact: "--", full: "" };
-
       const n = Number(v);
       if (!isFinite(n)) return { compact: String(v), full: String(v) };
 
@@ -198,5 +183,5 @@
     }
   }
 
-  if (!customElements.get(TAG)) customElements.define(TAG, LiquidGlassNumeric);
+  if (!customElements.get(TAG)) customElements.define(TAG, LiquidGlassNumeric2);
 })();
