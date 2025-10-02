@@ -65,7 +65,7 @@
         </div>
     `;
 
-    class LiquidGlassNumeric extends HTMLElement {
+    class LiquidGlassNumericV4 extends HTMLElement {
         constructor() {
             super();
             this.attachShadow({mode: "open"});
@@ -79,44 +79,60 @@
         }
 
         onCustomWidgetAfterUpdate(changedProperties) {
-            // Update static title if provided
             if ("title" in changedProperties) {
                 this.shadowRoot.getElementById("titleText").innerText = changedProperties["title"];
             }
             
-            // Update unit text if provided
             if ("unit" in changedProperties) {
                 this.shadowRoot.getElementById("unitText").innerText = changedProperties["unit"];
             }
             
-            // Handle data binding from SAC
             if ("myDataBinding" in changedProperties) {
-                const dataBinding = changedProperties["myDataBinding"];
-                this._updateFromData(dataBinding);
+                this._updateFromData(changedProperties["myDataBinding"]);
             }
         }
 
         _updateFromData(dataBinding) {
-            if (!dataBinding || !dataBinding.data) {
+            console.log("Data received:", dataBinding);
+            
+            if (!dataBinding) {
+                this.shadowRoot.getElementById("valueText").innerText = "No data";
                 return;
             }
 
-            // Extract value from the data
-            const data = dataBinding.data;
+            // Try different ways to extract the value
+            let value = null;
             
-            // Assuming the data structure has rows with measure values
-            if (data.length > 0) {
-                const row = data[0]; // Get first row
+            // Method 1: Check if it's a ResultSet
+            if (dataBinding.data && Array.isArray(dataBinding.data) && dataBinding.data.length > 0) {
+                const firstRow = dataBinding.data[0];
                 
-                // Get the measure value (adjust based on your data structure)
-                const measureValue = row.measures_0 || row[Object.keys(row)[0]];
-                
-                // Format the value
-                const formattedValue = this._formatValue(measureValue);
-                
-                // Update the display
-                this.shadowRoot.getElementById("valueText").innerText = formattedValue;
+                // Try to get measure value from different possible properties
+                if (firstRow["@MeasureDimension"]) {
+                    value = firstRow["@MeasureDimension"];
+                } else if (firstRow.raw) {
+                    value = firstRow.raw;
+                } else if (firstRow.formattedValue) {
+                    value = firstRow.formattedValue;
+                } else {
+                    // Get first numeric property
+                    for (let key in firstRow) {
+                        if (typeof firstRow[key] === 'number') {
+                            value = firstRow[key];
+                            break;
+                        }
+                    }
+                }
             }
+            
+            // Method 2: Direct value
+            if (value === null && typeof dataBinding === 'number') {
+                value = dataBinding;
+            }
+            
+            // Format and display
+            const formattedValue = this._formatValue(value);
+            this.shadowRoot.getElementById("valueText").innerText = formattedValue;
         }
 
         _formatValue(value) {
@@ -124,10 +140,14 @@
                 return "--";
             }
             
-            // Format large numbers with M, K suffixes
+            // Handle if it's already a formatted string
+            if (typeof value === 'string') {
+                return value;
+            }
+            
             const num = parseFloat(value);
             if (isNaN(num)) {
-                return value;
+                return String(value);
             }
             
             if (num >= 1000000) {
@@ -136,9 +156,9 @@
                 return (num / 1000).toFixed(1) + "k";
             }
             
-            return num.toFixed(0);
+            return num.toLocaleString();
         }
     }
 
-    customElements.define("com-custom-liquid-glass-numeric", LiquidGlassNumeric);
+    customElements.define("com-custom-liquid-glass-numeric-v4", LiquidGlassNumericV4);
 })();
