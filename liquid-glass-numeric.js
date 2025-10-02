@@ -26,7 +26,7 @@
                     0 12px 36px rgba(0,0,0,0.12);
       }
 
-      .title   { margin-bottom:4px;  }
+      .title   { margin-bottom:4px; }
       .subtitle{ margin-bottom:12px; opacity:.8; }
 
       .value-primary   { font-weight:700; letter-spacing:-.03em; text-shadow:0 2px 12px rgba(0,0,0,.08); }
@@ -71,10 +71,10 @@
       this.shadowRoot.appendChild(template.content.cloneNode(true));
       this._props = {
         // text
-        title: "",                // default empty -> hidden
+        title: "",                // blank by default
         subtitle: "",
         unit: "",
-        showTitle: false,         // hide by default
+        showTitle: false,         // hidden by default
         showSubtitle: false,
         // fonts
         titleFontSize: 16, titleColor: "#666",
@@ -110,12 +110,10 @@
         u.style.display = this._props.unit ? "" : "none";
       }
 
-      if (
-        "titleFontSize" in changed || "titleColor" in changed ||
-        "subtitleFontSize" in changed || "subtitleColor" in changed ||
-        "primaryFontSize" in changed || "primaryColor" in changed ||
-        "secondaryFontSize" in changed || "secondaryColor" in changed
-      ) {
+      if ("titleFontSize" in changed || "titleColor" in changed ||
+          "subtitleFontSize" in changed || "subtitleColor" in changed ||
+          "primaryFontSize" in changed || "primaryColor" in changed ||
+          "secondaryFontSize" in changed || "secondaryColor" in changed) {
         const st = this.shadowRoot;
         st.getElementById("titleText").style.cssText += `font-size:${this._props.titleFontSize}px; color:${this._props.titleColor};`;
         st.getElementById("subtitleText").style.cssText += `font-size:${this._props.subtitleFontSize}px; color:${this._props.subtitleColor};`;
@@ -174,19 +172,16 @@
     _formatNumber(v) {
       if (v == null || v === "") return { compact: "--", full: "" };
 
-      let n = Number(v);
+      const n = Number(v);
       if (!isFinite(n)) return { compact: String(v), full: String(v) };
 
-      // sign handling
       const sign = n < 0 ? -1 : 1;
       const abs = Math.abs(n);
 
-      // scale handling
       let divisor = 1, suffix = "";
-      const scale = this._props.scale; // none|k|m|b
-      if (scale === "k") { divisor = 1_000;      suffix = "k"; }
-      if (scale === "m") { divisor = 1_000_000;  suffix = "m"; }
-      if (scale === "b") { divisor = 1_000_000_000; suffix = "bn"; }
+      if (this._props.scale === "k") { divisor = 1_000; suffix = "k"; }
+      if (this._props.scale === "m") { divisor = 1_000_000; suffix = "m"; }
+      if (this._props.scale === "b") { divisor = 1_000_000_000; suffix = "bn"; }
 
       const base = abs / divisor;
       const dp = Math.max(0, Math.min(6, Number(this._props.decimals) || 0));
@@ -195,10 +190,7 @@
       let compact = new Intl.NumberFormat(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }).format(sign * base);
       if (this._props.showScaleText && suffix) compact += suffix;
 
-      if (this._props.showCurrencyUnit && this._props.unit) {
-        compact += ` ${this._props.unit}`;
-      }
-
+      if (this._props.showCurrencyUnit && this._props.unit) compact += ` ${this._props.unit}`;
       if (this._props.signStyle === "plusminus" && n > 0) compact = "+" + compact;
       if (this._props.signStyle === "brackets" && n < 0) compact = "(" + compact.replace("-", "") + ")";
 
