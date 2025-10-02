@@ -59,9 +59,9 @@
         </style>
         
         <div class="liquid-glass-container">
-            <div class="title" id="titleText">Title</div>
-            <div class="value" id="valueText">0</div>
-            <div class="unit" id="unitText">Unit</div>
+            <div class="title" id="titleText">Loading...</div>
+            <div class="value" id="valueText">--</div>
+            <div class="unit" id="unitText"></div>
         </div>
     `;
 
@@ -79,15 +79,64 @@
         }
 
         onCustomWidgetAfterUpdate(changedProperties) {
+            // Update static title if provided
             if ("title" in changedProperties) {
                 this.shadowRoot.getElementById("titleText").innerText = changedProperties["title"];
             }
-            if ("value" in changedProperties) {
-                this.shadowRoot.getElementById("valueText").innerText = changedProperties["value"];
-            }
+            
+            // Update unit text if provided
             if ("unit" in changedProperties) {
                 this.shadowRoot.getElementById("unitText").innerText = changedProperties["unit"];
             }
+            
+            // Handle data binding from SAC
+            if ("myDataBinding" in changedProperties) {
+                const dataBinding = changedProperties["myDataBinding"];
+                this._updateFromData(dataBinding);
+            }
+        }
+
+        _updateFromData(dataBinding) {
+            if (!dataBinding || !dataBinding.data) {
+                return;
+            }
+
+            // Extract value from the data
+            const data = dataBinding.data;
+            
+            // Assuming the data structure has rows with measure values
+            if (data.length > 0) {
+                const row = data[0]; // Get first row
+                
+                // Get the measure value (adjust based on your data structure)
+                const measureValue = row.measures_0 || row[Object.keys(row)[0]];
+                
+                // Format the value
+                const formattedValue = this._formatValue(measureValue);
+                
+                // Update the display
+                this.shadowRoot.getElementById("valueText").innerText = formattedValue;
+            }
+        }
+
+        _formatValue(value) {
+            if (value === null || value === undefined) {
+                return "--";
+            }
+            
+            // Format large numbers with M, K suffixes
+            const num = parseFloat(value);
+            if (isNaN(num)) {
+                return value;
+            }
+            
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + "m";
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + "k";
+            }
+            
+            return num.toFixed(0);
         }
     }
 
