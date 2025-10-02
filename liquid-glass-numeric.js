@@ -17,7 +17,7 @@
         padding:24px;
         transition: all .4s cubic-bezier(.4,0,.2,1);
         display:flex; flex-direction:column; justify-content:center; align-items:center;
-        text-align: center;
+        text-align:center;
       }
       .liquid-glass-container:hover{
         transform: translateY(-4px) scale(1.01);
@@ -34,7 +34,7 @@
 
       .unit { margin-top:6px; opacity:.75; }
 
-      /* Defaults; will be overridden from properties */
+      /* Defaults; overridden by properties at runtime */
       .title         { font-size:16px; color:#666; }
       .subtitle      { font-size:12px; color:#777; }
       .value-primary { font-size:58px; color:#222; }
@@ -70,10 +70,12 @@
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
       this._props = {
-        // defaults (will be overwritten by properties)
-        title: "Metric",
+        // text
+        title: "",                // default empty -> hidden
         subtitle: "",
         unit: "",
+        showTitle: false,         // hide by default
+        showSubtitle: false,
         // fonts
         titleFontSize: 16, titleColor: "#666",
         subtitleFontSize: 12, subtitleColor: "#777",
@@ -93,16 +95,21 @@
     onCustomWidgetBeforeUpdate(changed) { this._props = { ...this._props, ...changed }; }
 
     onCustomWidgetAfterUpdate(changed) {
-      // text props
-      if ("title" in changed || "subtitle" in changed || "unit" in changed) {
-        this.shadowRoot.getElementById("titleText").innerText = this._props.title || "";
-        this.shadowRoot.getElementById("subtitleText").innerText = this._props.subtitle || "";
-        this.shadowRoot.getElementById("unitText").innerText = this._props.unit || "";
-        this.shadowRoot.getElementById("subtitleText").style.display = this._props.subtitle ? "" : "none";
-        this.shadowRoot.getElementById("unitText").style.display = this._props.unit ? "" : "none";
+      if ("title" in changed || "subtitle" in changed || "unit" in changed ||
+          "showTitle" in changed || "showSubtitle" in changed) {
+        const t = this.shadowRoot.getElementById("titleText");
+        const s = this.shadowRoot.getElementById("subtitleText");
+        const u = this.shadowRoot.getElementById("unitText");
+
+        t.innerText = this._props.title || "";
+        s.innerText = this._props.subtitle || "";
+        u.innerText = this._props.unit || "";
+
+        t.style.display = (this._props.showTitle && this._props.title) ? "" : "none";
+        s.style.display = (this._props.showSubtitle && this._props.subtitle) ? "" : "none";
+        u.style.display = this._props.unit ? "" : "none";
       }
 
-      // font props
       if (
         "titleFontSize" in changed || "titleColor" in changed ||
         "subtitleFontSize" in changed || "subtitleColor" in changed ||
@@ -116,7 +123,6 @@
         st.getElementById("valueSecondary").style.cssText += `font-size:${this._props.secondaryFontSize}px; color:${this._props.secondaryColor};`;
       }
 
-      // data updates
       if ("myDataBinding" in changed || "secondaryDataBinding" in changed ||
           "scale" in changed || "decimals" in changed || "signStyle" in changed ||
           "showScaleText" in changed || "showCurrencyUnit" in changed || "showSecondary" in changed) {
@@ -189,7 +195,6 @@
       let compact = new Intl.NumberFormat(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }).format(sign * base);
       if (this._props.showScaleText && suffix) compact += suffix;
 
-      // currency/unit shown by SAC property "unit"; we just append if requested
       if (this._props.showCurrencyUnit && this._props.unit) {
         compact += ` ${this._props.unit}`;
       }
