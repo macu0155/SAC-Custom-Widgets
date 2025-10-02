@@ -56,21 +56,30 @@
                 color: #999;
                 margin-top: 4px;
             }
+            
+            .debug {
+                font-size: 10px;
+                color: #999;
+                margin-top: 8px;
+                max-width: 100%;
+                overflow: auto;
+                white-space: pre-wrap;
+            }
         </style>
         
         <div class="liquid-glass-container">
-            <div class="title" id="titleText">Loading...</div>
+            <div class="title" id="titleText">Orders</div>
             <div class="value" id="valueText">--</div>
-            <div class="unit" id="unitText"></div>
+            <div class="unit" id="unitText">in Million</div>
+            <div class="debug" id="debugText"></div>
         </div>
     `;
 
-    class LiquidGlassNumericV4 extends HTMLElement {
+    class LiquidGlassNumericV5 extends HTMLElement {
         constructor() {
             super();
             this.attachShadow({mode: "open"});
             this.shadowRoot.appendChild(template.content.cloneNode(true));
-            
             this._props = {};
         }
 
@@ -79,68 +88,74 @@
         }
 
         onCustomWidgetAfterUpdate(changedProperties) {
+            // Update title
             if ("title" in changedProperties) {
                 this.shadowRoot.getElementById("titleText").innerText = changedProperties["title"];
             }
             
+            // Update unit
             if ("unit" in changedProperties) {
                 this.shadowRoot.getElementById("unitText").innerText = changedProperties["unit"];
             }
             
+            // Handle data binding
             if ("myDataBinding" in changedProperties) {
-                this._updateFromData(changedProperties["myDataBinding"]);
+                const data = changedProperties["myDataBinding"];
+                
+                // Show what we received
+                this.shadowRoot.getElementById("debugText").innerText = 
+                    "Data: " + JSON.stringify(data, null, 2);
+                
+                this._parseData(data);
             }
         }
 
-        _updateFromData(dataBinding) {
-            console.log("Data received:", dataBinding);
-            
+        _parseData(dataBinding) {
             if (!dataBinding) {
                 this.shadowRoot.getElementById("valueText").innerText = "No data";
                 return;
             }
 
-            // Try different ways to extract the value
             let value = null;
-            
-            // Method 1: Check if it's a ResultSet
-            if (dataBinding.data && Array.isArray(dataBinding.data) && dataBinding.data.length > 0) {
-                const firstRow = dataBinding.data[0];
-                
-                // Try to get measure value from different possible properties
-                if (firstRow["@MeasureDimension"]) {
-                    value = firstRow["@MeasureDimension"];
-                } else if (firstRow.raw) {
-                    value = firstRow.raw;
-                } else if (firstRow.formattedValue) {
-                    value = firstRow.formattedValue;
-                } else {
-                    // Get first numeric property
-                    for (let key in firstRow) {
-                        if (typeof firstRow[key] === 'number') {
-                            value = firstRow[key];
-                            break;
-                        }
+
+            // Try to extract the value
+            try {
+                // Check various possible structures
+                if (dataBinding.data) {
+                    const data = dataBinding.data;
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        const row = data[0];
+                        
+                        // Try different property names
+                        value = row.Quantity || 
+                                row.value || 
+                                row.raw ||
+                                row.formattedValue ||
+                                row["@MeasureDimension"] ||
+                                Object.values(row)[0];
                     }
+                } else if (typeof dataBinding === 'object') {
+                    // Maybe the value is directly in the binding
+                    value = dataBinding.value || 
+                            dataBinding.raw ||
+                            dataBinding.formattedValue;
                 }
+            } catch (e) {
+                this.shadowRoot.getElementById("valueText").innerText = "Error: " + e.message;
+                return;
             }
-            
-            // Method 2: Direct value
-            if (value === null && typeof dataBinding === 'number') {
-                value = dataBinding;
-            }
-            
+
             // Format and display
-            const formattedValue = this._formatValue(value);
-            this.shadowRoot.getElementById("valueText").innerText = formattedValue;
+            if (value !== null && value !== undefined) {
+                const formatted = this._formatValue(value);
+                this.shadowRoot.getElementById("valueText").innerText = formatted;
+            } else {
+                this.shadowRoot.getElementById("valueText").innerText = "No value found";
+            }
         }
 
         _formatValue(value) {
-            if (value === null || value === undefined) {
-                return "--";
-            }
-            
-            // Handle if it's already a formatted string
             if (typeof value === 'string') {
                 return value;
             }
@@ -160,5 +175,5 @@
         }
     }
 
-    customElements.define("com-custom-liquid-glass-numeric-v4", LiquidGlassNumericV4);
+    customElements.define("com-custom-liquid-glass-numeric-v5", LiquidGlassNumericV5);
 })();
