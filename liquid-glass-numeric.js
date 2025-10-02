@@ -17,6 +17,7 @@
         padding:24px;
         transition: all .4s cubic-bezier(.4,0,.2,1);
         display:flex; flex-direction:column; justify-content:center; align-items:center;
+        text-align: center;
       }
       .liquid-glass-container:hover{
         transform: translateY(-4px) scale(1.01);
@@ -24,120 +25,181 @@
                     inset 0 0 25px rgba(255,255,255,0.18),
                     0 12px 36px rgba(0,0,0,0.12);
       }
-      .title{ font-size:16px; color:#666; margin-bottom:8px; font-weight:600; }
-      .value{ font-size:58px; font-weight:700; color:#222; letter-spacing:-.03em; text-shadow:0 2px 12px rgba(0,0,0,.08); }
-      .unit{ font-size:14px; color:#999; margin-top:4px; }
 
-      /* Hover badge for full value */
+      .title   { margin-bottom:4px;  }
+      .subtitle{ margin-bottom:12px; opacity:.8; }
+
+      .value-primary   { font-weight:700; letter-spacing:-.03em; text-shadow:0 2px 12px rgba(0,0,0,.08); }
+      .value-secondary { margin-top:6px; opacity:.85; }
+
+      .unit { margin-top:6px; opacity:.75; }
+
+      /* Defaults; will be overridden from properties */
+      .title         { font-size:16px; color:#666; }
+      .subtitle      { font-size:12px; color:#777; }
+      .value-primary { font-size:58px; color:#222; }
+      .value-secondary{font-size:18px; color:#333; }
+
       .hover-badge {
-        position: absolute;
-        bottom: 12px;
-        right: 16px;
-        padding: 4px 8px;
-        border-radius: 999px;
-        background: rgba(0,0,0,0.08);
-        font-size: 12px;
-        opacity: 0;
-        transform: translateY(6px);
+        position: absolute; bottom: 12px; right: 16px;
+        padding: 4px 8px; border-radius: 999px;
+        background: rgba(0,0,0,0.08); font-size: 12px;
+        opacity: 0; transform: translateY(6px);
         transition: opacity .2s ease, transform .2s ease;
       }
-      .liquid-glass-container:hover .hover-badge {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      .liquid-glass-container:hover .hover-badge { opacity: 1; transform: translateY(0); }
     </style>
 
     <div class="liquid-glass-container">
-      <div class="title" id="titleText">Metric</div>
-      <div class="value" id="valueText">--</div>
+      <div class="title" id="titleText"></div>
+      <div class="subtitle" id="subtitleText"></div>
+
+      <div class="value-primary" id="valuePrimary">--</div>
+      <div class="value-secondary" id="valueSecondary" style="display:none">--</div>
+
       <div class="unit" id="unitText"></div>
       <div class="hover-badge" id="hoverBadge"></div>
     </div>
   `;
+
+  const TAG = "com-custom-liquid-glass-numeric";
 
   class LiquidGlassNumeric extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
-      this._props = {};
+      this._props = {
+        // defaults (will be overwritten by properties)
+        title: "Metric",
+        subtitle: "",
+        unit: "",
+        // fonts
+        titleFontSize: 16, titleColor: "#666",
+        subtitleFontSize: 12, subtitleColor: "#777",
+        primaryFontSize: 58, primaryColor: "#222",
+        secondaryFontSize: 18, secondaryColor: "#333",
+        // number format
+        scale: "none",        // none|k|m|b
+        decimals: 0,
+        signStyle: "default", // default|plusminus|brackets
+        showScaleText: true,
+        showCurrencyUnit: false,
+        // visibility
+        showSecondary: false
+      };
     }
 
-    onCustomWidgetBeforeUpdate(changedProperties) {
-      this._props = { ...this._props, ...changedProperties };
+    onCustomWidgetBeforeUpdate(changed) { this._props = { ...this._props, ...changed }; }
+
+    onCustomWidgetAfterUpdate(changed) {
+      // text props
+      if ("title" in changed || "subtitle" in changed || "unit" in changed) {
+        this.shadowRoot.getElementById("titleText").innerText = this._props.title || "";
+        this.shadowRoot.getElementById("subtitleText").innerText = this._props.subtitle || "";
+        this.shadowRoot.getElementById("unitText").innerText = this._props.unit || "";
+        this.shadowRoot.getElementById("subtitleText").style.display = this._props.subtitle ? "" : "none";
+        this.shadowRoot.getElementById("unitText").style.display = this._props.unit ? "" : "none";
+      }
+
+      // font props
+      if (
+        "titleFontSize" in changed || "titleColor" in changed ||
+        "subtitleFontSize" in changed || "subtitleColor" in changed ||
+        "primaryFontSize" in changed || "primaryColor" in changed ||
+        "secondaryFontSize" in changed || "secondaryColor" in changed
+      ) {
+        const st = this.shadowRoot;
+        st.getElementById("titleText").style.cssText += `font-size:${this._props.titleFontSize}px; color:${this._props.titleColor};`;
+        st.getElementById("subtitleText").style.cssText += `font-size:${this._props.subtitleFontSize}px; color:${this._props.subtitleColor};`;
+        st.getElementById("valuePrimary").style.cssText += `font-size:${this._props.primaryFontSize}px; color:${this._props.primaryColor};`;
+        st.getElementById("valueSecondary").style.cssText += `font-size:${this._props.secondaryFontSize}px; color:${this._props.secondaryColor};`;
+      }
+
+      // data updates
+      if ("myDataBinding" in changed || "secondaryDataBinding" in changed ||
+          "scale" in changed || "decimals" in changed || "signStyle" in changed ||
+          "showScaleText" in changed || "showCurrencyUnit" in changed || "showSecondary" in changed) {
+        this._updatePrimary();
+        this._updateSecondary();
+      }
     }
 
-    onCustomWidgetAfterUpdate(changedProperties) {
-      if ("title" in changedProperties) {
-        this.shadowRoot.getElementById("titleText").innerText = changedProperties.title ?? "Metric";
-      }
-      if ("unit" in changedProperties) {
-        this.shadowRoot.getElementById("unitText").innerText = changedProperties.unit ?? "";
-      }
-      if ("myDataBinding" in changedProperties) {
-        this._updateFromData(changedProperties.myDataBinding);
-      }
-    }
-
-    _updateFromData(binding) {
-      const valEl = this.shadowRoot.getElementById("valueText");
+    _updatePrimary() {
+      const el = this.shadowRoot.getElementById("valuePrimary");
       const badge = this.shadowRoot.getElementById("hoverBadge");
+      const binding = this._props.myDataBinding;
 
-      if (!binding || !binding.data || binding.data.length === 0) {
-        valEl.innerText = "--";
-        if (badge) badge.innerText = "";
-        valEl.title = "";
-        return;
-      }
+      const raw = this._firstCell(binding);
+      const formatted = this._formatNumber(raw);
+      el.innerText = formatted.compact;
+      el.title = formatted.full;
+      badge.innerText = formatted.full;
+    }
 
+    _updateSecondary() {
+      const el = this.shadowRoot.getElementById("valueSecondary");
+      if (!this._props.showSecondary) { el.style.display = "none"; return; }
+
+      const binding = this._props.secondaryDataBinding;
+      const raw = this._firstCell(binding);
+      const formatted = this._formatNumber(raw);
+      el.style.display = "";
+      el.innerText = formatted.compact;
+      el.title = formatted.full;
+    }
+
+    _firstCell(binding) {
+      if (!binding || !binding.data || !binding.data.length) return null;
       const row = binding.data[0];
-
-      // Prefer standard measure key, else first numeric-looking field, else first field.
-      let rawCell = row.measures_0;
-      if (rawCell == null) {
-        const keys = Object.keys(row);
-        rawCell = keys.map(k => row[k]).find(v => {
-          const r = this._extractCell(v);
-          return r != null && isFinite(Number(r));
-        }) ?? row[keys[0]];
-      }
-
-      const extracted = this._extractCell(rawCell);         // unwrap {raw, formatted} etc.
-      valEl.innerText = this._formatValue(extracted);       // compact k/m
-      const full = this._formatFull(extracted);             // full number for tooltip/badge
-      if (badge) badge.innerText = full;
-      valEl.title = full;
+      let cell = row.measures_0 ?? row[Object.keys(row)[0]];
+      return this._extractCell(cell);
     }
 
     _extractCell(cell) {
       if (cell == null) return null;
       if (typeof cell === "number" || typeof cell === "string") return cell;
       if (typeof cell === "object") {
-        // Try display-first, then raw numeric fallbacks
         return cell.formatted ?? cell.label ?? cell.text ?? cell.displayValue ?? cell.value ?? cell.raw ?? null;
       }
       return String(cell);
     }
 
-    _formatValue(v) {
-      if (v == null) return "--";
-      const n = Number(v);
-      if (!isFinite(n)) return String(v);
-      if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + "m";
-      if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + "k";
-      return n.toFixed(0);
-    }
+    _formatNumber(v) {
+      if (v == null || v === "") return { compact: "--", full: "" };
 
-    _formatFull(v) {
-      if (v == null) return "";
-      const n = Number(v);
-      return isFinite(n) ? n.toLocaleString() : String(v);
+      let n = Number(v);
+      if (!isFinite(n)) return { compact: String(v), full: String(v) };
+
+      // sign handling
+      const sign = n < 0 ? -1 : 1;
+      const abs = Math.abs(n);
+
+      // scale handling
+      let divisor = 1, suffix = "";
+      const scale = this._props.scale; // none|k|m|b
+      if (scale === "k") { divisor = 1_000;      suffix = "k"; }
+      if (scale === "m") { divisor = 1_000_000;  suffix = "m"; }
+      if (scale === "b") { divisor = 1_000_000_000; suffix = "bn"; }
+
+      const base = abs / divisor;
+      const dp = Math.max(0, Math.min(6, Number(this._props.decimals) || 0));
+
+      const full = new Intl.NumberFormat(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }).format(n);
+      let compact = new Intl.NumberFormat(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }).format(sign * base);
+      if (this._props.showScaleText && suffix) compact += suffix;
+
+      // currency/unit shown by SAC property "unit"; we just append if requested
+      if (this._props.showCurrencyUnit && this._props.unit) {
+        compact += ` ${this._props.unit}`;
+      }
+
+      if (this._props.signStyle === "plusminus" && n > 0) compact = "+" + compact;
+      if (this._props.signStyle === "brackets" && n < 0) compact = "(" + compact.replace("-", "") + ")";
+
+      return { compact, full };
     }
   }
 
-  // Guard: only define once in the page
-  const TAG = "com-custom-liquid-glass-numeric";
-  if (!customElements.get(TAG)) {
-    customElements.define(TAG, LiquidGlassNumeric);
-  }
+  if (!customElements.get(TAG)) customElements.define(TAG, LiquidGlassNumeric);
 })();
