@@ -39,8 +39,6 @@
             }
         </style>
         
-        <slot name="dataBindings"></slot>
-        
         <div class="property-group">
             <h3>Display Settings</h3>
             <div class="property-row">
@@ -144,4 +142,3 @@
 
     customElements.define("com-custom-lgn2-numeric-aps", LiquidGlassNumeric2APS);
 })();
-
