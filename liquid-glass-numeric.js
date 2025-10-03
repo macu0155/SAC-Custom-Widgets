@@ -62,7 +62,7 @@
     </div>
   `;
 
-  // New tag to avoid conflicts with your older widget
+  // New tag to avoid collisions with your earlier widget
   const TAG = "com-custom-lgn2-numeric";
 
   class LiquidGlassNumeric2 extends HTMLElement {
@@ -93,7 +93,9 @@
       };
     }
 
-    onCustomWidgetBeforeUpdate(changed) { this._props = { ...this._props, ...changed }; }
+    onCustomWidgetBeforeUpdate(changed) {
+      this._props = { ...this._props, ...changed };
+    }
 
     onCustomWidgetAfterUpdate(changed) {
       if ("title" in changed || "subtitle" in changed || "unit" in changed ||
@@ -134,6 +136,7 @@
       const el = this.shadowRoot.getElementById("valuePrimary");
       const badge = this.shadowRoot.getElementById("hoverBadge");
       const binding = this._props.myDataBinding;
+
       const raw = this._firstCell(binding);
       const formatted = this._formatNumber(raw);
       el.innerText = formatted.compact;
@@ -144,6 +147,7 @@
     _updateSecondary() {
       const el = this.shadowRoot.getElementById("valueSecondary");
       if (!this._props.showSecondary) { el.style.display = "none"; return; }
+
       const binding = this._props.secondaryDataBinding;
       const raw = this._firstCell(binding);
       const formatted = this._formatNumber(raw);
