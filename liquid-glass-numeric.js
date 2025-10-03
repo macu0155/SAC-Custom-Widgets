@@ -62,6 +62,7 @@
     </div>
   `;
 
+  // New tag to avoid conflicts with your older widget
   const TAG = "com-custom-lgn2-numeric";
 
   class LiquidGlassNumeric2 extends HTMLElement {
@@ -70,14 +71,24 @@
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
       this._props = {
-        title: "", subtitle: "", unit: "",
-        showTitle: false, showSubtitle: false,
+        // text
+        title: "",
+        subtitle: "",
+        unit: "",
+        showTitle: false,
+        showSubtitle: false,
+        // fonts
         titleFontSize: 16, titleColor: "#666",
         subtitleFontSize: 12, subtitleColor: "#777",
         primaryFontSize: 58, primaryColor: "#222",
         secondaryFontSize: 18, secondaryColor: "#333",
-        scale: "none", decimals: 0, signStyle: "default",
-        showScaleText: true, showCurrencyUnit: false,
+        // number format
+        scale: "none",        // none|k|m|b
+        decimals: 0,
+        signStyle: "default", // default|plusminus|brackets
+        showScaleText: true,
+        showCurrencyUnit: false,
+        // visibility
         showSecondary: false
       };
     }
@@ -90,9 +101,11 @@
         const t = this.shadowRoot.getElementById("titleText");
         const s = this.shadowRoot.getElementById("subtitleText");
         const u = this.shadowRoot.getElementById("unitText");
+
         t.innerText = this._props.title || "";
         s.innerText = this._props.subtitle || "";
         u.innerText = this._props.unit || "";
+
         t.style.display = (this._props.showTitle && this._props.title) ? "" : "none";
         s.style.display = (this._props.showSubtitle && this._props.subtitle) ? "" : "none";
         u.style.display = this._props.unit ? "" : "none";
@@ -157,6 +170,7 @@
 
     _formatNumber(v) {
       if (v == null || v === "") return { compact: "--", full: "" };
+
       const n = Number(v);
       if (!isFinite(n)) return { compact: String(v), full: String(v) };
 
