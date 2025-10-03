@@ -62,7 +62,7 @@
     </div>
   `;
 
-  // New tag to avoid collisions with your earlier widget
+  // New tag to avoid collisions with earlier attempts
   const TAG = "com-custom-lgn2-numeric";
 
   class LiquidGlassNumeric2 extends HTMLElement {
@@ -71,31 +71,21 @@
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
       this._props = {
-        // text
-        title: "",
-        subtitle: "",
-        unit: "",
-        showTitle: false,
-        showSubtitle: false,
-        // fonts
+        title: "", subtitle: "", unit: "",
+        showTitle: false, showSubtitle: false,
         titleFontSize: 16, titleColor: "#666",
         subtitleFontSize: 12, subtitleColor: "#777",
         primaryFontSize: 58, primaryColor: "#222",
         secondaryFontSize: 18, secondaryColor: "#333",
-        // number format
-        scale: "none",        // none|k|m|b
-        decimals: 0,
-        signStyle: "default", // default|plusminus|brackets
+        scale: "none", decimals: 0,
+        signStyle: "default",      // default|plusminus|brackets
         showScaleText: true,
         showCurrencyUnit: false,
-        // visibility
         showSecondary: false
       };
     }
 
-    onCustomWidgetBeforeUpdate(changed) {
-      this._props = { ...this._props, ...changed };
-    }
+    onCustomWidgetBeforeUpdate(changed) { this._props = { ...this._props, ...changed }; }
 
     onCustomWidgetAfterUpdate(changed) {
       if ("title" in changed || "subtitle" in changed || "unit" in changed ||
@@ -103,11 +93,9 @@
         const t = this.shadowRoot.getElementById("titleText");
         const s = this.shadowRoot.getElementById("subtitleText");
         const u = this.shadowRoot.getElementById("unitText");
-
         t.innerText = this._props.title || "";
         s.innerText = this._props.subtitle || "";
         u.innerText = this._props.unit || "";
-
         t.style.display = (this._props.showTitle && this._props.title) ? "" : "none";
         s.style.display = (this._props.showSubtitle && this._props.subtitle) ? "" : "none";
         u.style.display = this._props.unit ? "" : "none";
@@ -136,7 +124,6 @@
       const el = this.shadowRoot.getElementById("valuePrimary");
       const badge = this.shadowRoot.getElementById("hoverBadge");
       const binding = this._props.myDataBinding;
-
       const raw = this._firstCell(binding);
       const formatted = this._formatNumber(raw);
       el.innerText = formatted.compact;
@@ -147,7 +134,6 @@
     _updateSecondary() {
       const el = this.shadowRoot.getElementById("valueSecondary");
       if (!this._props.showSecondary) { el.style.display = "none"; return; }
-
       const binding = this._props.secondaryDataBinding;
       const raw = this._firstCell(binding);
       const formatted = this._formatNumber(raw);
@@ -174,7 +160,6 @@
 
     _formatNumber(v) {
       if (v == null || v === "") return { compact: "--", full: "" };
-
       const n = Number(v);
       if (!isFinite(n)) return { compact: String(v), full: String(v) };
 
@@ -190,7 +175,7 @@
       const dp = Math.max(0, Math.min(6, Number(this._props.decimals) || 0));
 
       const full = new Intl.NumberFormat(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }).format(n);
-      let compact = new Intl.NumberFormat(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }).format(sign * base);
+      let compact = new Intl.NumberFormat(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }).format((n < 0 ? -1 : 1) * (Math.abs(n) / divisor));
       if (this._props.showScaleText && suffix) compact += suffix;
 
       if (this._props.showCurrencyUnit && this._props.unit) compact += ` ${this._props.unit}`;
