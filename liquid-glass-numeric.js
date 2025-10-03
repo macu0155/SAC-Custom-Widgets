@@ -24,12 +24,18 @@
       .hover-badge{ position:absolute; bottom:12px; right:16px; padding:4px 8px; border-radius:999px; background:rgba(0,0,0,0.08); font-size:12px; opacity:0; transform:translateY(6px); transition:opacity .2s, transform .2s; }
       .liquid-glass-container:hover .hover-badge{ opacity:1; transform:translateY(0); }
 
-      /* gear button */
-      .gear{ position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%; background:rgba(0,0,0,.06); display:flex; align-items:center; justify-content:center; cursor:pointer; }
-      .gear:after{ content:"⚙"; font-size:14px; opacity:.7; }
+      /* settings button: bottom-left, high z-index */
+      .gear{ position:absolute; left:12px; bottom:12px; z-index:9999;
+             min-width:34px; height:28px; padding:0 8px; border-radius:18px;
+             background:rgba(0,0,0,.08); display:flex; align-items:center; gap:6px;
+             justify-content:center; cursor:pointer; user-select:none; }
+      .gear:before{ content:"⚙"; font-size:14px; opacity:.85; }
+      .gear span{ font-size:12px; color:#222; opacity:.85; }
 
       /* settings panel */
-      .panel{ position:absolute; top:40px; right:10px; width:220px; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.12); padding:10px; display:none; z-index:10; }
+      .panel{ position:absolute; bottom:52px; left:12px; width:240px; background:#fff;
+              border:1px solid rgba(0,0,0,.12); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.16);
+              padding:10px; display:none; z-index:10000; }
       .panel h4{ margin:6px 0 8px 0; font-size:13px; color:#333; }
       .row{ display:flex; align-items:center; justify-content:space-between; margin:6px 0; font-size:12px; }
       .row select, .row input[type="number"], .row input[type="checkbox"]{ font-size:12px; }
@@ -39,7 +45,7 @@
     </style>
 
     <div class="liquid-glass-container">
-      <div class="gear" id="gear"></div>
+      <div class="gear" id="gear"><span>Settings</span></div>
       <div class="panel" id="panel">
         <div class="close" id="x">✕</div>
         <h4>Format</h4>
@@ -61,7 +67,7 @@
         </div>
         <div class="row"><label><input id="scaleTxt" type="checkbox" checked> show scale text</label></div>
         <div class="row"><label><input id="unitTxt" type="checkbox"> show unit after value</label></div>
-        <div class="hint">Settings save per widget instance.</div>
+        <div class="hint">Tip: double-click the widget to open/close.</div>
       </div>
 
       <div class="title" id="titleText"></div>
@@ -73,12 +79,9 @@
     </div>
   `;
 
-  const TAG = "com-custom-lgn2-numeric"; // keep your working tag
+  const TAG = "com-custom-lgn2-numeric";
 
-  function uid(el){
-    // stable key for localStorage: prefer story element id if present, else random
-    return el.getAttribute("id") || (el._lgnKey ||= "lgn-"+Math.random().toString(36).slice(2));
-  }
+  function uid(el){ return el.getAttribute("id") || (el._lgnKey ||= "lgn-"+Math.random().toString(36).slice(2)); }
 
   class LiquidGlassNumeric2 extends HTMLElement {
     constructor() {
@@ -88,10 +91,12 @@
       this._props = { title:"", subtitle:"", unit:"", showTitle:false, showSubtitle:false, showSecondary:false };
       this._fmt = { decimals:0, scale:"none", signStyle:"default", showScaleText:true, showCurrencyUnit:false };
 
-      // wire settings UI
       const p = this.shadowRoot.getElementById("panel");
-      this.shadowRoot.getElementById("gear").onclick = () => p.style.display = p.style.display === "block" ? "none" : "block";
+      const toggle = () => p.style.display = (p.style.display === "block" ? "none" : "block");
+      this.shadowRoot.getElementById("gear").onclick = toggle;
       this.shadowRoot.getElementById("x").onclick = () => p.style.display = "none";
+      this.shadowRoot.querySelector(".liquid-glass-container").ondblclick = toggle;
+
       const dec = this.shadowRoot.getElementById("dec");
       const sc  = this.shadowRoot.getElementById("scale");
       const sg  = this.shadowRoot.getElementById("sign");
@@ -105,9 +110,7 @@
 
     _storageKey(){ return "lgn2:"+uid(this); }
     _saveFmt(){ localStorage.setItem(this._storageKey(), JSON.stringify(this._fmtFromPanel())); }
-    _loadFmt(){
-      try{ const raw = localStorage.getItem(this._storageKey()); if(raw){ this._fmt = JSON.parse(raw); } }catch(e){}
-    }
+    _loadFmt(){ try{ const raw = localStorage.getItem(this._storageKey()); if(raw){ this._fmt = JSON.parse(raw); } }catch(e){} }
     _fmtFromPanel(){
       const dec = parseInt(this.shadowRoot.getElementById("dec").value || "0", 10);
       const sc  = this.shadowRoot.getElementById("scale").value;
@@ -140,7 +143,6 @@
       if ("myDataBinding" in changed || "secondaryDataBinding" in changed || "showSecondary" in changed) {
         this._updatePrimary(); this._updateSecondary();
       }
-      // also refresh if unit changed and showCurrencyUnit is on
       if ("unit" in changed) { this._updatePrimary(); this._updateSecondary(); }
     }
 
@@ -172,9 +174,7 @@
 
     _format(v) {
       if (v == null || v === "") return { compact:"--", full:"" };
-      // if SAC gave a formatted string, use it directly
       if (typeof v === "string" && isNaN(Number(v.replace(/[^0-9.-]/g,"")))) return { compact:v, full:v };
-
       const n = Number(v); if (!isFinite(n)) return { compact:String(v), full:String(v) };
 
       let divisor=1, suffix="";
@@ -191,10 +191,10 @@
       if (this._fmt.showCurrencyUnit && this._props.unit) compact += ` ${this._props.unit}`;
       if (this._fmt.signStyle==="plusminus" && n>0) compact = "+"+compact;
       if (this._fmt.signStyle==="brackets" && n<0) compact = "("+compact.replace("-","")+")";
-
       return { compact, full };
     }
   }
 
   if (!customElements.get(TAG)) customElements.define(TAG, LiquidGlassNumeric2);
 })();
+
