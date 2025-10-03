@@ -79,30 +79,32 @@
     </div>
   `;
 
+  const TAG = "com-custom-lgn2-numeric";
+
+  function uid(el){ return el.getAttribute("id") || (el._lgnKey ||= "lgn-"+Math.random().toString(36).slice(2)); }
+
   class LiquidGlassNumeric2 extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
       
-      // Initialize all properties with default values
-      this._properties = {
-        title: "",
-        subtitle: "",
-        unit: "",
-        showTitle: false,
-        showSubtitle: false,
-        showSecondary: false,
-        myDataBinding: {},
-        secondaryDataBinding: {}
+      // Initialize properties
+      this._props = { 
+        title:"", 
+        subtitle:"", 
+        unit:"", 
+        showTitle:false, 
+        showSubtitle:false, 
+        showSecondary:false 
       };
       
       this._fmt = { 
-        decimals: 0, 
-        scale: "none", 
-        signStyle: "default", 
-        showScaleText: true, 
-        showCurrencyUnit: false 
+        decimals:0, 
+        scale:"none", 
+        signStyle:"default", 
+        showScaleText:true, 
+        showCurrencyUnit:false 
       };
 
       const p = this.shadowRoot.getElementById("panel");
@@ -124,102 +126,81 @@
       dec.oninput = sc.onchange = sg.onchange = st.onchange = cu.onchange = apply;
     }
 
-    connectedCallback() { 
+    connectedCallback(){ 
       this._loadFmt(); 
       this._syncPanel(); 
       this._updateDisplay();
     }
 
-    // SAC Property Getters and Setters
-    get title() { return this._properties.title; }
+    // Property getters and setters for SAC
+    get title() { return this._props.title; }
     set title(value) { 
-      this._properties.title = value;
+      this._props.title = value;
       this._updateDisplay();
     }
 
-    get subtitle() { return this._properties.subtitle; }
+    get subtitle() { return this._props.subtitle; }
     set subtitle(value) { 
-      this._properties.subtitle = value;
+      this._props.subtitle = value;
       this._updateDisplay();
     }
 
-    get unit() { return this._properties.unit; }
+    get unit() { return this._props.unit; }
     set unit(value) { 
-      this._properties.unit = value;
+      this._props.unit = value;
       this._updateDisplay();
       this._updatePrimary();
       this._updateSecondary();
     }
 
-    get showTitle() { return this._properties.showTitle; }
+    get showTitle() { return this._props.showTitle; }
     set showTitle(value) { 
-      this._properties.showTitle = value;
+      this._props.showTitle = value;
       this._updateDisplay();
     }
 
-    get showSubtitle() { return this._properties.showSubtitle; }
+    get showSubtitle() { return this._props.showSubtitle; }
     set showSubtitle(value) { 
-      this._properties.showSubtitle = value;
+      this._props.showSubtitle = value;
       this._updateDisplay();
     }
 
-    get showSecondary() { return this._properties.showSecondary; }
+    get showSecondary() { return this._props.showSecondary; }
     set showSecondary(value) { 
-      this._properties.showSecondary = value;
+      this._props.showSecondary = value;
       this._updateDisplay();
       this._updateSecondary();
     }
 
-    // Update display based on properties
     _updateDisplay() {
       const t = this.shadowRoot.getElementById("titleText");
       const s = this.shadowRoot.getElementById("subtitleText");
       const u = this.shadowRoot.getElementById("unitText");
       
-      t.textContent = this._properties.title || "";
-      s.textContent = this._properties.subtitle || "";
-      u.textContent = this._properties.unit || "";
+      t.textContent = this._props.title || "";
+      s.textContent = this._props.subtitle || "";
+      u.textContent = this._props.unit || "";
       
-      t.style.display = (this._properties.showTitle && this._properties.title) ? "" : "none";
-      s.style.display = (this._properties.showSubtitle && this._properties.subtitle) ? "" : "none";
-      u.style.display = this._properties.unit ? "" : "none";
+      t.style.display = (this._props.showTitle && this._props.title) ? "" : "none";
+      s.style.display = (this._props.showSubtitle && this._props.subtitle) ? "" : "none";
+      u.style.display = this._props.unit ? "" : "none";
     }
 
-    _storageKey() { 
-      const el = this;
-      return "lgn2:" + (el.getAttribute("id") || (el._lgnKey ||= "lgn-"+Math.random().toString(36).slice(2)));
-    }
+    _storageKey(){ return "lgn2:"+uid(this); }
+    _saveFmt(){ localStorage.setItem(this._storageKey(), JSON.stringify(this._fmtFromPanel())); }
+    _loadFmt(){ try{ const raw = localStorage.getItem(this._storageKey()); if(raw){ this._fmt = JSON.parse(raw); } }catch(e){} }
     
-    _saveFmt() { 
-      localStorage.setItem(this._storageKey(), JSON.stringify(this._fmtFromPanel())); 
-    }
-    
-    _loadFmt() { 
-      try { 
-        const raw = localStorage.getItem(this._storageKey()); 
-        if (raw) { 
-          this._fmt = JSON.parse(raw); 
-        } 
-      } catch(e) {} 
-    }
-    
-    _fmtFromPanel() {
+    _fmtFromPanel(){
       const dec = parseInt(this.shadowRoot.getElementById("dec").value || "0", 10);
       const sc  = this.shadowRoot.getElementById("scale").value;
       const sg  = this.shadowRoot.getElementById("sign").value;
       const st  = this.shadowRoot.getElementById("scaleTxt").checked;
       const cu  = this.shadowRoot.getElementById("unitTxt").checked;
-      this._fmt = { 
-        decimals: Math.max(0, Math.min(6, dec)), 
-        scale: sc, 
-        signStyle: sg, 
-        showScaleText: st, 
-        showCurrencyUnit: cu 
-      };
+      this._fmt = { decimals: Math.max(0, Math.min(6, dec)), scale: sc, signStyle: sg, showScaleText: st, showCurrencyUnit: cu };
       return this._fmt;
     }
     
-    _syncPanel() {
+    _syncPanel(){
       this.shadowRoot.getElementById("dec").value = this._fmt.decimals;
       this.shadowRoot.getElementById("scale").value = this._fmt.scale;
       this.shadowRoot.getElementById("sign").value = this._fmt.signStyle;
@@ -227,32 +208,23 @@
       this.shadowRoot.getElementById("unitTxt").checked = !!this._fmt.showCurrencyUnit;
     }
 
-    // SAC lifecycle methods
+    // SAC data binding lifecycle methods
     onCustomWidgetBeforeUpdate(changed) { 
-      // Store incoming changes
-      if (changed) {
-        Object.keys(changed).forEach(key => {
-          if (key in this._properties) {
-            this._properties[key] = changed[key];
-          }
-        });
-      }
+      this._props = { ...this._props, ...changed }; 
     }
     
     onCustomWidgetAfterUpdate(changed) {
-      // Update display when properties change
-      if (changed) {
-        const displayProps = ["title", "subtitle", "unit", "showTitle", "showSubtitle", "showSecondary"];
-        const needsDisplayUpdate = displayProps.some(prop => prop in changed);
-        
-        if (needsDisplayUpdate) {
-          this._updateDisplay();
-        }
-        
-        if ("myDataBinding" in changed || "secondaryDataBinding" in changed) {
-          this._updatePrimary();
-          this._updateSecondary();
-        }
+      if ("title" in changed || "subtitle" in changed || "unit" in changed ||
+          "showTitle" in changed || "showSubtitle" in changed) {
+        this._updateDisplay();
+      }
+      if ("myDataBinding" in changed || "secondaryDataBinding" in changed || "showSecondary" in changed) {
+        this._updatePrimary(); 
+        this._updateSecondary();
+      }
+      if ("unit" in changed) { 
+        this._updatePrimary(); 
+        this._updateSecondary(); 
       }
     }
 
@@ -262,71 +234,56 @@
       const cell = row.measures_0 ?? row[Object.keys(row)[0]];
       if (cell == null) return null;
       if (typeof cell === "number" || typeof cell === "string") return cell;
-      if (typeof cell === "object") {
-        return cell.formatted ?? cell.displayValue ?? cell.text ?? cell.value ?? cell.raw ?? null;
-      }
+      if (typeof cell === "object") return cell.formatted ?? cell.displayValue ?? cell.text ?? cell.value ?? cell.raw ?? null;
       return String(cell);
     }
 
     _updatePrimary() {
       const el = this.shadowRoot.getElementById("valuePrimary");
       const badge = this.shadowRoot.getElementById("hoverBadge");
-      const raw = this._firstCell(this._properties.myDataBinding);
+      const raw = this._firstCell(this._props.myDataBinding);
       const out = this._format(raw);
-      el.textContent = out.compact;
-      el.title = out.full;
+      el.textContent = out.compact; 
+      el.title = out.full; 
       badge.textContent = out.full;
     }
 
     _updateSecondary() {
       const el = this.shadowRoot.getElementById("valueSecondary");
-      if (!this._properties.showSecondary) { 
+      if (!this._props.showSecondary) { 
         el.style.display = "none"; 
         return; 
       }
-      const raw = this._firstCell(this._properties.secondaryDataBinding);
+      const raw = this._firstCell(this._props.secondaryDataBinding);
       const out = this._format(raw);
-      el.style.display = "";
-      el.textContent = out.compact;
+      el.style.display = ""; 
+      el.textContent = out.compact; 
       el.title = out.full;
     }
 
     _format(v) {
-      if (v == null || v === "") return { compact: "--", full: "" };
-      if (typeof v === "string" && isNaN(Number(v.replace(/[^0-9.-]/g, "")))) {
-        return { compact: v, full: v };
-      }
-      const n = Number(v);
-      if (!isFinite(n)) return { compact: String(v), full: String(v) };
+      if (v == null || v === "") return { compact:"--", full:"" };
+      if (typeof v === "string" && isNaN(Number(v.replace(/[^0-9.-]/g,"")))) return { compact:v, full:v };
+      const n = Number(v); 
+      if (!isFinite(n)) return { compact:String(v), full:String(v) };
 
-      let divisor = 1, suffix = "";
-      if (this._fmt.scale === "k") { divisor = 1e3; suffix = "k"; }
-      if (this._fmt.scale === "m") { divisor = 1e6; suffix = "m"; }
-      if (this._fmt.scale === "b") { divisor = 1e9; suffix = "bn"; }
+      let divisor=1, suffix="";
+      if (this._fmt.scale==="k"){ divisor=1e3; suffix="k"; }
+      if (this._fmt.scale==="m"){ divisor=1e6; suffix="m"; }
+      if (this._fmt.scale==="b"){ divisor=1e9; suffix="bn"; }
 
-      const dp = Math.max(0, Math.min(6, Number(this._fmt.decimals) || 0));
-      const nf = new Intl.NumberFormat(undefined, { 
-        minimumFractionDigits: dp, 
-        maximumFractionDigits: dp 
-      });
+      const dp = Math.max(0, Math.min(6, Number(this._fmt.decimals)||0));
+      const nf = new Intl.NumberFormat(undefined,{ minimumFractionDigits:dp, maximumFractionDigits:dp });
 
       const full = nf.format(n);
-      let compact = nf.format((n < 0 ? -1 : 1) * (Math.abs(n) / divisor));
-      
+      let compact = nf.format((n<0?-1:1) * (Math.abs(n)/divisor));
       if (this._fmt.showScaleText && suffix) compact += suffix;
-      if (this._fmt.showCurrencyUnit && this._properties.unit) {
-        compact += ` ${this._properties.unit}`;
-      }
-      if (this._fmt.signStyle === "plusminus" && n > 0) compact = "+" + compact;
-      if (this._fmt.signStyle === "brackets" && n < 0) {
-        compact = "(" + compact.replace("-", "") + ")";
-      }
-      
+      if (this._fmt.showCurrencyUnit && this._props.unit) compact += ` ${this._props.unit}`;
+      if (this._fmt.signStyle==="plusminus" && n>0) compact = "+"+compact;
+      if (this._fmt.signStyle==="brackets" && n<0) compact = "("+compact.replace("-","")+")";
       return { compact, full };
     }
   }
 
-  if (!customElements.get("com-custom-lgn2-numeric")) {
-    customElements.define("com-custom-lgn2-numeric", LiquidGlassNumeric2);
-  }
+  if (!customElements.get(TAG)) customElements.define(TAG, LiquidGlassNumeric2);
 })();
