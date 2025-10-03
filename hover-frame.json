@@ -10,7 +10,7 @@
     {
       "kind": "main",
       "tag": "com-custom-hover-frame",
-      "url": "https://YOUR-CDN-URL/hover-frame.js",
+      "url": "https://cdn.jsdelivr.net/gh/macu0155/SAC-Custom-Widgets@main/hover-frame.js",
       "integrity": "",
       "ignoreIntegrity": true
     }
