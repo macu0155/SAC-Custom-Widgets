@@ -79,7 +79,7 @@
     </div>
   `;
 
-  const TAG = "com-custom-lgn2-numeric";
+  const TAG = "com-custom-lgn4-numeric";
 
   function uid(el){ return el.getAttribute("id") || (el._lgnKey ||= "lgn-"+Math.random().toString(36).slice(2)); }
 
@@ -197,4 +197,5 @@
 
   if (!customElements.get(TAG)) customElements.define(TAG, LiquidGlassNumeric2);
 })();
+
 
