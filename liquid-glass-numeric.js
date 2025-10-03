@@ -79,10 +79,6 @@
     </div>
   `;
 
-  const TAG = "com-custom-lgn2-numeric";
-
-  function uid(el){ return el.getAttribute("id") || (el._lgnKey ||= "lgn-"+Math.random().toString(36).slice(2)); }
-
   class LiquidGlassNumeric2 extends HTMLElement {
     constructor() {
       super();
@@ -96,7 +92,9 @@
         unit: "",
         showTitle: false,
         showSubtitle: false,
-        showSecondary: false
+        showSecondary: false,
+        myDataBinding: {},
+        secondaryDataBinding: {}
       };
       
       this._fmt = { 
@@ -188,7 +186,8 @@
     }
 
     _storageKey() { 
-      return "lgn2:" + uid(this); 
+      const el = this;
+      return "lgn2:" + (el.getAttribute("id") || (el._lgnKey ||= "lgn-"+Math.random().toString(36).slice(2)));
     }
     
     _saveFmt() { 
@@ -327,7 +326,7 @@
     }
   }
 
-  if (!customElements.get(TAG)) {
-    customElements.define(TAG, LiquidGlassNumeric2);
+  if (!customElements.get("com-custom-lgn2-numeric")) {
+    customElements.define("com-custom-lgn2-numeric", LiquidGlassNumeric2);
   }
 })();
