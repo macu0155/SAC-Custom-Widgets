@@ -11,16 +11,17 @@
         position: relative;
         width: 100%;
         height: 100%;
-        border: 3px solid #0070f3;
-        border-radius: 8px;
+        border: 2px solid rgba(0, 112, 243, 0.3);
+        border-radius: 10px;
         box-sizing: border-box;
-        transition: all 0.3s ease;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         background: transparent;
       }
       .hover-container:hover {
-        border-color: #0052cc;
-        box-shadow: 0 4px 16px rgba(0, 112, 243, 0.3);
-        transform: scale(1.01);
+        border: 4px solid #0070f3;
+        box-shadow: 0 8px 32px rgba(0, 112, 243, 0.4), 
+                    0 0 0 2px rgba(0, 112, 243, 0.1);
+        transform: scale(1.03) translateY(-2px);
       }
     </style>
     <div class="hover-container"></div>
