@@ -34,23 +34,14 @@ class HoverFrame extends HTMLElement {
     window.addEventListener("mousemove", this._onMouseMove, { passive: true });
     this._applyProps();
   }
-
   disconnectedCallback () {
     window.removeEventListener("mousemove", this._onMouseMove);
   }
 
-  // SAC lifecycle
-  onCustomWidgetBeforeUpdate (changedProps) {
-    Object.assign(this._props, changedProps);
-  }
-
-  onCustomWidgetAfterUpdate () {
-    this._applyProps();
-  }
-
-  onResize () {
-    // no-op; hover uses bounding client rect every frame anyway
-  }
+  // SAC lifecycle hooks
+  onCustomWidgetBeforeUpdate (changedProps) { Object.assign(this._props, changedProps); }
+  onCustomWidgetAfterUpdate () { this._applyProps(); }
+  onCustomWidgetResize (width, height) { /* no-op */ }
 
   _applyProps () {
     const p = this._props;
@@ -59,7 +50,6 @@ class HoverFrame extends HTMLElement {
     this.$frame.style.setProperty("--bc", p.borderColor);
     this.$frame.style.setProperty("--hbc", p.hoverBorderColor);
     this.$frame.style.inset = `${p.inset}px`;
-
     this.$popover.textContent = p.popoverText || "";
     const off = Math.max(0, p.popoverOffset);
     this.$popover.style.top = `${(p.inset || 0) - off}px`;
@@ -82,6 +72,7 @@ class HoverFrame extends HTMLElement {
     });
   }
 }
-
 customElements.define("hover-frame", HoverFrame);
+
+
 
