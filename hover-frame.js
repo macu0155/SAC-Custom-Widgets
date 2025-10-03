@@ -13,16 +13,18 @@
         width: 100%;
         height: 100%;
         border-radius: 8px;
+        border: 0 solid transparent;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         pointer-events: auto;
         box-sizing: border-box;
       }
+      .hover-frame:hover {
+        border-width: 2px;
+        border-color: #0070f3;
+      }
       .hover-frame.scale:hover {
         transform: scale(1.02);
         z-index: 100;
-      }
-      .hover-frame.shadow-none:hover {
-        box-shadow: none;
       }
       .hover-frame.shadow-light:hover {
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -61,29 +63,16 @@
     _updateStyles() {
       const frame = this._frame;
       
-      // Set background
       frame.style.backgroundColor = this._props.backgroundColor;
-      
-      // Set border on hover via CSS variable
       frame.style.setProperty('--border-color', this._props.borderColor);
+      frame.style.borderColor = this._props.borderColor;
       frame.style.setProperty('--border-width', this._props.borderWidth + 'px');
-      frame.style.border = '0 solid transparent';
       
-      // Add hover border style
-      const style = this.shadowRoot.querySelector('style');
-      if (!style.textContent.includes('.hover-frame:hover {')) {
-        style.textContent += `
-          .hover-frame:hover {
-            border: var(--border-width) solid var(--border-color);
-          }
-        `;
+      frame.classList.remove('shadow-light', 'shadow-medium', 'shadow-strong');
+      if (this._props.shadowIntensity !== 'none') {
+        frame.classList.add('shadow-' + this._props.shadowIntensity);
       }
       
-      // Apply shadow class
-      frame.classList.remove('shadow-none', 'shadow-light', 'shadow-medium', 'shadow-strong');
-      frame.classList.add('shadow-' + this._props.shadowIntensity);
-      
-      // Apply scale class
       if (this._props.scaleEffect) {
         frame.classList.add('scale');
       } else {
@@ -91,33 +80,31 @@
       }
     }
 
-    // Property setters
     set borderColor(value) {
       this._props.borderColor = value || "#0070f3";
-      this._updateStyles();
+      if (this._frame) this._updateStyles();
     }
 
     set borderWidth(value) {
       this._props.borderWidth = parseInt(value) || 2;
-      this._updateStyles();
+      if (this._frame) this._updateStyles();
     }
 
     set shadowIntensity(value) {
       this._props.shadowIntensity = value || "medium";
-      this._updateStyles();
+      if (this._frame) this._updateStyles();
     }
 
     set scaleEffect(value) {
       this._props.scaleEffect = !!value;
-      this._updateStyles();
+      if (this._frame) this._updateStyles();
     }
 
     set backgroundColor(value) {
       this._props.backgroundColor = value || "transparent";
-      this._updateStyles();
+      if (this._frame) this._updateStyles();
     }
 
-    // Property getters
     get borderColor() { return this._props.borderColor; }
     get borderWidth() { return this._props.borderWidth; }
     get shadowIntensity() { return this._props.shadowIntensity; }
