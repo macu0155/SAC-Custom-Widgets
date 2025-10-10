@@ -1,0 +1,38 @@
+{
+  "id": "com.osb.semigauge",
+  "version": "1.0.0",
+  "name": "OSB Semicircle Gauge",
+  "description": "Brandable semicircle (angular) gauge for % values",
+  "vendor": "OSB",
+  "license": "MIT",
+  "webcomponents": [
+    {
+      "kind": "main",
+      "tag": "osb-semi-gauge",
+      "url": "main.js",
+      "editorMode": "separate",
+      "supportsAutoHeight": true,
+      "properties": [
+        { "name": "value",        "type": "number", "default": 0,   "label": "Value (%)" },
+        { "name": "max",          "type": "number", "default": 100, "label": "Max (%)" },
+        { "name": "primaryColor", "type": "string", "default": "#289b7d", "label": "Primary Color" },
+        { "name": "trackColor",   "type": "string", "default": "#e9edf2", "label": "Track Color" },
+        { "name": "textColor",    "type": "string", "default": "#3c424a", "label": "Text Color" },
+        { "name": "ringWidth",    "type": "number", "default": 18,  "label": "Ring Width (px)" },
+        { "name": "showNumber",   "type": "boolean","default": true, "label": "Show Number" },
+        { "name": "numberSuffix", "type": "string", "default": "%",  "label": "Number Suffix" },
+        { "name": "startAngle",   "type": "number", "default": -180, "label": "Start Angle (deg)" },
+        { "name": "endAngle",     "type": "number", "default": 0,    "label": "End Angle (deg)" }
+      ],
+      "dataBindings": [
+        {
+          "id": "valueBinding",
+          "label": "Value",
+          "type": "Measure",
+          "required": false,
+          "max": 1
+        }
+      ]
+    }
+  ]
+}
